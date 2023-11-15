@@ -63,6 +63,7 @@ void USART1_IRQHandler(void);
 void SDMMC1_IRQHandler(void);
 void SPI4_IRQHandler(void);
 void LPTIM1_IRQHandler(void);
+void MDMA_IRQHandler(void);
 void LPTIM2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

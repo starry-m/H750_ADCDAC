@@ -136,7 +136,7 @@ void LCD_Init(void)
   delay_ms(100);
 	
 	//************* Start Initial Sequence **********//
-	LCD_WR_REG(0x11); //Sleep out 
+//	LCD_WR_REG(0x11); //Sleep out 
 	delay_ms(120);              //Delay 120ms 
 	//************* Start Initial Sequence **********// 
 	LCD_WR_REG(0x36);
@@ -211,8 +211,10 @@ void LCD_Init(void)
 	LCD_WR_DATA8(0x1F);
 	LCD_WR_DATA8(0x20);
 	LCD_WR_DATA8(0x23);
+	
 	LCD_WR_REG(0x21); 
-
+	LCD_WR_REG(0x11); //Sleep out 
+	 HAL_Delay(120); 
 	LCD_WR_REG(0x29); 
 } 
 
