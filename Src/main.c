@@ -39,6 +39,8 @@
 #include "string.h"
 #include "FFT/fft.h"
 #include "DAC/dac_cs.h"
+
+#include<string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -182,6 +184,42 @@ uint8_t  FatFs_FileTest(void)	//文件创建和写入测试
 //	printf("SD容量：%dMB\r\n",SD_CardCapacity);	
 //	printf("SD剩余：%dMB\r\n",SD_FreeCapacity);
 //	FatFs_FileTest();
+
+//for(i=0;i<240;i++)
+//{
+//	for(j=0;j<320;j++)
+//	{				
+////		GPIOB->CRL=0X88888888;
+////		OV7725_RCK=0;
+////		color=OV7725_DATA;	//读数据--高8位
+////		
+////		OV7725_RCK=1; 
+////		color<<=8;  
+////		OV7725_RCK=0;
+////		color|=OV7725_DATA;	//读数据	--低8位		(高低8+8位合并成一个u16发送)								
+////		OV7725_RCK=1;
+////		GPIOB->CRL=0X33333333;
+//		//LCD显示
+////		LCD_WR_DATA(color);
+//		//写位图信息头进内存卡
+//		MyFile_Res=f_write(&fnew, &color, sizeof(color), &fnum);
+////		color++;
+//		if( MyFile_Res != FR_OK )
+//		{
+//		printf("图像信息写入失败，%d,%d\r\n",i,j);
+//		}
+//		MyFile_Res = f_sync(&fnew);
+//		if( MyFile_Res != FR_OK )
+//		{
+//		printf("图像信息写入 同步失败  \r\n");
+//		}
+//	}
+//	printf("%d:行写完\r\n",i);
+//}
+
+//	printf("\r\n图片写入完成\r\n");
+
+
 //BMP头文件
 #define u16 uint16_t
 #define u32 uint32_t
@@ -232,6 +270,92 @@ typedef __packed struct
 }BITMAPINFO; 
 
 BITMAPINFO bmp;
+//uint16_t color_dis_Data[320*240];
+__IO uint8_t bmpWrit_flag=0;
+extern uint16_t Show_GramA[76800];
+void bmpWriteIn()
+{
+	__set_PRIMASK(1);
+	printf("开始截图\r\n");
+	FIL	fnew;			// 文件对象
+	uint16_t fnum;
+	//打开文件，若不存在就创建
+	
+	MyFile_Res = f_open(&fnew, "0:wave1.bmp", FA_OPEN_ALWAYS | FA_WRITE );//"0:tgggh.bmp"
+	//文件打开成功
+	if(MyFile_Res == FR_OK)
+	{
+		printf("\r\n开始写入BMP头信息\r\n");
+		//填写文件信息头信息  
+		bmp.bmfHeader.bfType = 0x4D42;			//bmp类型  "BM"
+		bmp.bmfHeader.bfSize= 54 + 320*240*2;	//文件大小（信息结构体+像素数据）
+		bmp.bmfHeader.bfReserved1 = 0x0000;		//保留，必须为0
+		bmp.bmfHeader.bfReserved2 = 0x0000;  			
+		bmp.bmfHeader.bfOffBits=54;				//位图信息结构体所占的字节数
+		
+		//填写位图信息头信息  
+		bmp.bmiHeader.biSize=40;  			//位图信息头的大小
+		bmp.bmiHeader.biWidth=320;  		//位图的宽度
+		bmp.bmiHeader.biHeight=240;  		//图像的高度
+		bmp.bmiHeader.biPlanes=1;  			//目标设别的级别，必须是1
+		bmp.bmiHeader.biBitCount=16;        //每像素位数
+		bmp.bmiHeader.biCompression=3;  	//RGB555格式
+		bmp.bmiHeader.biSizeImage=320*240*2;//实际位图所占用的字节数（仅考虑位图像素数据）
+		bmp.bmiHeader.biXPelsPerMeter=0;	//水平分辨率
+		bmp.bmiHeader.biYPelsPerMeter=0; 	//垂直分辨率
+		bmp.bmiHeader.biClrImportant=0;   	//说明图像显示有重要影响的颜色索引数目，0代表所有的颜色一样重要
+		bmp.bmiHeader.biClrUsed=0;  		//位图实际使用的彩色表中的颜色索引数，0表示使用所有的调色板项
+		
+		//RGB565格式掩码
+		bmp.RGB_MASK[0].rgbBlue = 0;
+		bmp.RGB_MASK[0].rgbGreen = 0xF8;
+		bmp.RGB_MASK[0].rgbRed = 0;
+		bmp.RGB_MASK[0].rgbReserved = 0;
+		
+		bmp.RGB_MASK[1].rgbBlue = 0xE0;
+		bmp.RGB_MASK[1].rgbGreen = 0x07;
+		bmp.RGB_MASK[1].rgbRed = 0;
+		bmp.RGB_MASK[1].rgbReserved = 0;
+		
+		bmp.RGB_MASK[2].rgbBlue = 0x1F;
+		bmp.RGB_MASK[2].rgbGreen = 0;
+		bmp.RGB_MASK[2].rgbRed = 0;
+		bmp.RGB_MASK[2].rgbReserved = 0;
+		
+		//写文件头进文件  
+		MyFile_Res= f_write(&fnew, &bmp, sizeof(bmp), &fnum);
+		if( MyFile_Res != FR_OK )
+		{
+		printf("头部信息写入失败\r\n");
+		}
+		MyFile_Res = f_sync(&fnew);
+				if( MyFile_Res != FR_OK )
+		{
+		printf("头部信息写入 同步失败  \r\n");
+		}
+	}
+	printf("图像信息开始写入\r\n");
+//	uint16_t i,j;
+	uint16_t color=0XF800;
+//	memset(color_dis_Data,0XF800,sizeof(color_dis_Data));
+//	uint16_t index=0;
+//	for(i=0;i<240;i++)
+//		for(j=0;j<320;j++)
+//				color_dis_Data[index++]=0XF800;
+	MyFile_Res=f_write(&fnew, &Show_GramA, sizeof(Show_GramA), &fnum);
+	if( MyFile_Res != FR_OK )
+	{
+	printf("大图像信息写入失败\r\n");
+	}
+	MyFile_Res = f_sync(&fnew);
+	if( MyFile_Res != FR_OK )
+	{
+	printf("图像信息写入 同步失败  \r\n");
+	}
+	printf("\r\n图片写入完成\r\n");
+	__set_PRIMASK(0);
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -296,105 +420,24 @@ int main(void)
 	{
 	printf("\r\nSD 失败\r\n");
 	}
-	FIL	fnew;			// 文件对象
-	uint16_t fnum;
-	//打开文件，若不存在就创建
-	MyFile_Res = f_open(&fnew, "0:fw234.bmp", FA_OPEN_ALWAYS | FA_WRITE );
-
-	//文件打开成功
-	if(MyFile_Res == FR_OK)
-	{
-		printf("\r\n开始写入BMP头信息\r\n");
-		//填写文件信息头信息  
-		bmp.bmfHeader.bfType = 0x4D42;			//bmp类型  "BM"
-		bmp.bmfHeader.bfSize= 54 + 320*240*2;	//文件大小（信息结构体+像素数据）
-		bmp.bmfHeader.bfReserved1 = 0x0000;		//保留，必须为0
-		bmp.bmfHeader.bfReserved2 = 0x0000;  			
-		bmp.bmfHeader.bfOffBits=54;				//位图信息结构体所占的字节数
-		
-		//填写位图信息头信息  
-		bmp.bmiHeader.biSize=40;  			//位图信息头的大小
-		bmp.bmiHeader.biWidth=320;  		//位图的宽度
-		bmp.bmiHeader.biHeight=240;  		//图像的高度
-		bmp.bmiHeader.biPlanes=1;  			//目标设别的级别，必须是1
-		bmp.bmiHeader.biBitCount=16;        //每像素位数
-		bmp.bmiHeader.biCompression=3;  	//RGB555格式
-		bmp.bmiHeader.biSizeImage=320*240*2;//实际位图所占用的字节数（仅考虑位图像素数据）
-		bmp.bmiHeader.biXPelsPerMeter=0;	//水平分辨率
-		bmp.bmiHeader.biYPelsPerMeter=0; 	//垂直分辨率
-		bmp.bmiHeader.biClrImportant=0;   	//说明图像显示有重要影响的颜色索引数目，0代表所有的颜色一样重要
-		bmp.bmiHeader.biClrUsed=0;  		//位图实际使用的彩色表中的颜色索引数，0表示使用所有的调色板项
-		
-		//RGB565格式掩码
-		bmp.RGB_MASK[0].rgbBlue = 0;
-		bmp.RGB_MASK[0].rgbGreen = 0xF8;
-		bmp.RGB_MASK[0].rgbRed = 0;
-		bmp.RGB_MASK[0].rgbReserved = 0;
-		
-		bmp.RGB_MASK[1].rgbBlue = 0xE0;
-		bmp.RGB_MASK[1].rgbGreen = 0x07;
-		bmp.RGB_MASK[1].rgbRed = 0;
-		bmp.RGB_MASK[1].rgbReserved = 0;
-		
-		bmp.RGB_MASK[2].rgbBlue = 0x1F;
-		bmp.RGB_MASK[2].rgbGreen = 0;
-		bmp.RGB_MASK[2].rgbRed = 0;
-		bmp.RGB_MASK[2].rgbReserved = 0;
-		
-		//写文件头进文件  
-		MyFile_Res= f_write(&fnew, &bmp, sizeof(bmp), &fnum);
-		if( MyFile_Res != FR_OK )
-		{
-		printf("头部信息写入失败\r\n");
-		}
-		MyFile_Res = f_sync(&fnew);
-				if( MyFile_Res != FR_OK )
-		{
-		printf("头部信息写入 同步失败  \r\n");
-		}
-	}
-	printf("图像信息开始写入\r\n");
-	uint16_t i,j;
-	uint16_t color=0XFE11;
-	for(i=0;i<240;i++)
-{
-	for(j=0;j<320;j++)
-	{				
-//		GPIOB->CRL=0X88888888;
-//		OV7725_RCK=0;
-//		color=OV7725_DATA;	//读数据--高8位
-//		
-//		OV7725_RCK=1; 
-//		color<<=8;  
-//		OV7725_RCK=0;
-//		color|=OV7725_DATA;	//读数据	--低8位		(高低8+8位合并成一个u16发送)								
-//		OV7725_RCK=1;
-//		GPIOB->CRL=0X33333333;
-		//LCD显示
-//		LCD_WR_DATA(color);
-		//写位图信息头进内存卡
-		MyFile_Res=f_write(&fnew, &color, sizeof(color), &fnum);
-		if( MyFile_Res != FR_OK )
-		{
-		printf("图像信息写入失败，%d,%d\r\n",i,j);
-		}
-		MyFile_Res = f_sync(&fnew);
-		if( MyFile_Res != FR_OK )
-		{
-		printf("图像信息写入 同步失败  \r\n");
-		}
-	}
-	printf("%d:行写完\r\n",i);
-}
-
-	printf("\r\n图片写入完成\r\n");
-	while(1)
-	{
 	
-		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_0);
-		HAL_Delay(500);
-	}
+//	while(1)
+//	{
+//	
+//		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_0);
+//		HAL_Delay(500);
+//	}
+//	
+//	
+//	while(1)
+//	{
+//	
+//		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_0);
+//		HAL_Delay(500);
+//	}
 	LCD_Show_Start();
+//	bmpWriteIn();
+	uint8_t tafa=0,twett=1;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -406,6 +449,12 @@ int main(void)
 			{
 				LCD_Refresh(Show_Lin);
 				Pre_LPTIM_COUNT = LPTIM_COUNT;
+//				tafa++;
+//				if(tafa>200 &&twett==1)
+//				{
+//					twett=0;
+//				bmpWriteIn();
+//				}
 			}	
 		//按键刷新
 		if(LPTIM_COUNT%5 == 0 )//每5次刷新一次
@@ -466,7 +515,18 @@ int main(void)
 			case 5 ://ADC输出处理为相应的波形.		
 					ADC_Data_Processing(Show_Lin,&OSC);
 					ADC_FFT_Processing(adc_dma_data1,Show_Lin,Trigger_Chx);
-					State = 0;
+					State = 6;
+				break;
+			case 6: 
+				if(bmpWrit_flag)
+				{
+					
+					bmpWrit_flag=0;
+					bmpWriteIn();
+				}
+					
+				
+				State = 0;
 				break;
 		}
     /* USER CODE END WHILE */

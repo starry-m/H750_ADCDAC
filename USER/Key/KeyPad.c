@@ -194,7 +194,7 @@ void Encoder_scan(void)
 }
 
 
-
+extern __IO uint8_t bmpWrit_flag;
 // 扫描加上档位切换
 void selectGear(uint8_t  Key_num)
 {		
@@ -297,6 +297,7 @@ void selectGear(uint8_t  Key_num)
 					break;
 				case 0x02://KEY3 触发转换
 					Trigger_Chx = (Trigger_Chx == 1) ? 2:1;
+					bmpWrit_flag=1;
 					break;
 				case 0x01://KEY4 DAC开关
 					DAC_switch = ~DAC_switch; 

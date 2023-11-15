@@ -60,6 +60,7 @@ void DMA1_Stream1_IRQHandler(void);
 void DMA1_Stream2_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void USART1_IRQHandler(void);
+void SDMMC1_IRQHandler(void);
 void SPI4_IRQHandler(void);
 void LPTIM1_IRQHandler(void);
 void LPTIM2_IRQHandler(void);
