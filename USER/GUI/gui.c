@@ -345,6 +345,7 @@ void LCD_Draw_grid(uint16_t *dat)
       返回值：  无
 ******************************************************************************/
 //简单显示
+extern void sendWave(float ch1, float ch2);
 void Lcd_Show_LinA(uint16_t *dat,uint16_t*Show_Lin)
 {
 		static uint8_t i =0;
@@ -366,6 +367,7 @@ void Lcd_Show_LinA(uint16_t *dat,uint16_t*Show_Lin)
 			{
 					Lcd_Show_Lin(dat,0+(x*2),Show_Lin[0+(x*2)],Show_Lin[0+((x+1)*2)],LIGHTGREEN );
 					Lcd_Show_Lin(dat,1+(x*2),Show_Lin[1+(x*2)],Show_Lin[1+((x+1)*2)],GREEN );
+					// sendWave(Show_Lin[0+(x*2)],Show_Lin[1+(x*2)]);
 			}
 			//存放频谱
 			for(uint16_t x=0;x<255;x++)

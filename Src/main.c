@@ -358,6 +358,27 @@ void bmpWriteIn()
 	__set_PRIMASK(0);
 
 }
+uint8_t tail[4] = {0x00, 0x00, 0x80, 0x7f};
+void sendWave(float ch1, float ch2)
+{
+	// static float t = 0;
+	float ch[2];  
+    ch[0] = ch1;
+    ch[1] = ch2;
+	HAL_UART_Transmit(&huart1,(uint8_t *)ch, sizeof(float) * 2,1000);
+    // Serial.write((char *)ch, sizeof(float) * 2); 
+    // 发送帧尾
+    
+    // Serial.write(tail, 4);
+	HAL_UART_Transmit(&huart1,tail, 4,1000);
+		// t +=0.01;
+
+}
+void sendAdcData()
+{
+
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -412,26 +433,26 @@ int main(void)
   MX_TIM6_Init();
   MX_SPI4_Init();
   MX_USART1_UART_Init();
-  MX_SDMMC1_SD_Init();
+//  MX_SDMMC1_SD_Init();
   MX_LPTIM1_Init();
-  MX_FATFS_Init(); 
+//  MX_FATFS_Init(); 
   /* USER CODE BEGIN 2 */
 	//LCD开启
 	delay_init(480);
 	printf("sd卡测试\r\n");
 	
-	BYTE work[_MAX_SS]; 
-	FATFS_LinkDriver(&SD_Driver, SDPath);		// 初始化驱动
-	MyFile_Res = f_mount(&SD_FatFs,"0:",1);	//	挂载SD卡
-	
-	if (MyFile_Res == FR_OK)	//判断是否挂载成功
-	{
-		printf("\r\nSD文件系统挂载成功\r\n");
-	}
-	else
-	{
-	printf("\r\nSD 失败\r\n");
-	}
+//	BYTE work[_MAX_SS]; 
+//	FATFS_LinkDriver(&SD_Driver, SDPath);		// 初始化驱动
+//	MyFile_Res = f_mount(&SD_FatFs,"0:",1);	//	挂载SD卡
+//	
+//	if (MyFile_Res == FR_OK)	//判断是否挂载成功
+//	{
+//		printf("\r\nSD文件系统挂载成功\r\n");
+//	}
+//	else
+//	{
+//	printf("\r\nSD 失败\r\n");
+//	}
 	
 //	while(1)
 //	{
@@ -463,6 +484,17 @@ int main(void)
 			{
 				LCD_Refresh(Show_Lin);
 				Pre_LPTIM_COUNT = LPTIM_COUNT;
+				static uint32_t index=0;
+				float senddata=(float)(adc_dma_data1[index]&0x0000ffff);
+				if(index>=1000)
+				{
+					index=0;
+					
+				}
+				HAL_UART_Transmit(&huart1,(uint8_t *)&senddata,sizeof(float),1000);
+				HAL_UART_Transmit(&huart1,tail, 4,1000);
+				index ++;
+				// sendWave();
 //				tafa++;
 //				if(tafa>200 &&twett==1)
 //				{
