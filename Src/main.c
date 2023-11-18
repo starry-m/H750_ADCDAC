@@ -437,6 +437,7 @@ int main(void)
   MX_LPTIM1_Init();
 //  MX_FATFS_Init(); 
   /* USER CODE BEGIN 2 */
+	MX_UART5_Init();
 	//LCD¿ªÆô
 	delay_init(480);
 	printf("sd¿¨²âÊÔ\r\n");
@@ -485,15 +486,21 @@ int main(void)
 				LCD_Refresh(Show_Lin);
 				Pre_LPTIM_COUNT = LPTIM_COUNT;
 				static uint32_t index=0;
-				float senddata=(float)(adc_dma_data1[index]&0x0000ffff);
+				if(bmpWrit_flag)
+				{
+					float senddata=(float)(adc_dma_data1[index]&0x0000ffff);
 				if(index>=1000)
 				{
 					index=0;
 					
 				}
-				HAL_UART_Transmit(&huart1,(uint8_t *)&senddata,sizeof(float),1000);
-				HAL_UART_Transmit(&huart1,tail, 4,1000);
+				HAL_UART_Transmit(&huart5,(uint8_t *)&senddata,sizeof(float),1000);
+				HAL_UART_Transmit(&huart5,tail, 4,1000);
 				index ++;
+//					bmpWrit_flag=0;
+//					bmpWriteIn();
+				}
+
 				// sendWave();
 //				tafa++;
 //				if(tafa>200 &&twett==1)
@@ -567,7 +574,7 @@ int main(void)
 				if(bmpWrit_flag)
 				{
 					 
-					bmpWrit_flag=0;
+//					bmpWrit_flag=0;
 //					bmpWriteIn();
 				}
 					

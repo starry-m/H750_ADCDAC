@@ -29,7 +29,8 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+extern UART_HandleTypeDef huart5;
+void MX_UART5_Init(void);
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart1;
